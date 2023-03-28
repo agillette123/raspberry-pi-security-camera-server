@@ -1,7 +1,7 @@
 import glob
 import os
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'txt'}
 
 def allowed_file(filename):
     return '.' in filename and \
