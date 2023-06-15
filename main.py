@@ -42,6 +42,10 @@ def index():
         # Return an error with a 500 status code
         return jsonify(error='No routes found'), 500
 
+@app.route('/view_data', methods=['GET','POST'])
+@auth.login_required
+def view_data():
+    return render_template('view_data.html')
     
 
 @app.route('/upload', methods=['GET', 'POST'])

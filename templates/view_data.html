@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>View Data</title>
+        <style>
+            /* CSS styles for text color */
+            .original-color {
+              color: black; /* Initial color */
+            }
+            
+            .warning-color {
+              color: red; /* Color to change to */
+            }
+        </style>
+    </head>
+    <body>
+        <h1 class = "original-color">View Data</h1>
+        <button id = "start">Start Auto Updates</button>
+        <button id = "stop">Stop Auto Updates</button>   
+        <br>
+        <h3 id = "name" class = "original-color"></h3>
+        <br>
+        <img id = "latest-img" src=" ">
+        <br>
+        <p id = "latest-txt" class = "original-color"></p>
+        <br>
+        
+        <audio id="audioPlayer" autoplay hidden></audio>
+     
+        <script>
+            //all variables, defining most of them to be global to improve performance and reduce memory allocated
+            var updatesOn = false;
+            var username = "admin";
+            var password = "asurapwd";
+            var homeURL = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port;
+            var responseText;
+            var parser;
+            var htmlDoc;
+            var firstUrl = null;
+            var secondUrl = null;
+            var test;
+            var filename;
+            var imageElement;
+            var textElement;
+            var warning = false;
+
+            var tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            //starts updates when button is clicked
+            document.getElementById("start").addEventListener("click", function(){
+                updatesOn = true;
+                startUpdate(" ", " ");
+            });
+
+            //stops updates when button is clicked
+            document.getElementById("stop").addEventListener("click", function(){
+                updatesOn = false;
+            });
+
+            //update function that sends XMLHttpRequest to homeurl to retrieve its contents and process them
+            function startUpdate(firstUrl, secondUrl){
+                if(updatesOn){
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', homeURL, true);
+                    xhr.setRequestHeader('Authorization', 'Basic ' + btoa(username + ':' + password));
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            var responseText = xhr.responseText;
+                            var parser = new DOMParser();
+                            var htmlDoc = parser.parseFromString(responseText, 'text/html');
+
+                            //getting the first two links from the homeurl page which is assumed to be the latest image and its accompanying text file
+                            var links = htmlDoc.querySelectorAll('a:nth-of-type(-n+2)');
+                            if (links.length >= 1) 
+                                firstUrl = links[0].href;
+                            if (links.length >= 2) 
+                                secondUrl = links[1].href;
+                                       
+                            //checks image against previously downloaded image, and if it's a different image, it downloads the new image and updates the page
+                            if (firstUrl && firstUrl !== " ") {
+                                var previousUrl1 = localStorage.getItem('previousUrl1') || '';    
+                                if(previousUrl1 !== firstUrl){
+                                    var req1 = new XMLHttpRequest();
+                                    //downloadFile(firstUrl);
+                                    var titleElement = document.getElementById("name");
+                                    titleElement.innerHTML = firstUrl.substr(31,firstUrl.length-3); 
+                                    imageElement = document.querySelector("#latest-img");
+                                    imageElement.src = firstUrl;
+                                    previousUrl1 = firstUrl;
+                                    localStorage.setItem('previousUrl1', previousUrl1);
+                                }  
+                            }
+                            
+                            //checks text file against previously downloaded file, and if it's a different file, it downloads the new text file and updates the page with its content
+                            if (secondUrl && secondUrl !== "") {
+
+                                var previousText2 = localStorage.getItem('previousText2') || '';
+                                var txtReq = new XMLHttpRequest();
+
+                                //fetches text from downloaded file and displays it on html page
+                                fetchText(txtReq, secondUrl, function(text) {
+                                    if (text !== null) {
+                                        textElement = document.getElementById("latest-txt");
+                                        textElement.innerHTML = text; 
+                                        if (text !== previousText2) {
+                                            var req2 = new XMLHttpRequest();
+                                            //downloadFile(secondUrl);
+                                            localStorage.setItem('previousText2', text);
+                                        }
+                                    } else {
+                                        //error handling
+                                        console.error('Failed to retrieve text');
+                                    }
+                                });
+                                checkForWarning(secondUrl);
+                                if(warning)
+                                    playWarning();
+                                else
+                                    setBackToOriginal();
+                            }    
+                        };
+                    };
+                    xhr.send();
+                    setTimeout(function() { startUpdate(""); }, 5000); 
+                }
+            }
+
+            function extractFileName(url){
+                return url.substr(31,url.length)
+            }
+
+            function fetchText(txtReq, secondUrl, callback) {
+                txtReq.open('GET', secondUrl, true);
+                txtReq.onload = function() {
+                    if (txtReq.status === 200) {
+                        var text = txtReq.responseText;
+                        var formattedText = text.replace(/\n/g, "<br>");
+                        callback(formattedText);
+                    }
+                };
+                //error handling
+                txtReq.onerror = function() {
+                    console.error('Error:', txtReq.statusText);
+                    callback(null);
+                };
+                txtReq.send();
+            }
+
+            function downloadFile(fileUrl) {
+                var link = document.createElement('a');
+                link.href = fileUrl;
+                link.download = extractFileName(fileUrl);
+                link.click();
+            }
+                        
+            function checkForWarning(url){
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var fileContent = xhr.responseText;
+                        var lines = fileContent.split('\n');
+                        lines.forEach(function(line) {
+                            // Extract the average frequency value from the line
+                            var avgMatch = line.match(/AVG:\s+(\d+)/);
+                            
+                            if (avgMatch && avgMatch.length > 1) {
+                                var average = parseInt(avgMatch[1]);
+                                if (average < 37000)
+                                    warning = true;
+                                else
+                                    warning = false;
+                            }
+                        });
+                    }
+                };
+                xhr.send();
+            }
+
+            function playWarning(){
+                var elements = document.getElementsByClassName('original-color');
+                for (var i = 0; i < elements.length; i++) {
+                    elements[i].classList.add('warning-color');
+                }
+                playLocalAudio('https://assets.mixkit.co/active_storage/sfx/765/765.wav');
+                // Show alert window
+                
+                window.alert('WARNING: Average frequency is below 37000, ice is present');
+            }
+            
+            function playLocalAudio(fileUrl) {
+                var audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.src = fileUrl;
+            }
+
+            function setBackToOriginal() {
+                var elements = document.getElementsByClassName('warning-color');
+                for (var i = 0; i < elements.length; i++) {
+                elements[i].classList.remove('warning-color');
+                }
+            }
+
+        </script>                                                                                
+    </body>
+</html>
