@@ -97,9 +97,9 @@
 
                         var links = htmlDoc.querySelectorAll('a');
                         for(let i = 0; i < links.length; i++){
-                            console.log(links.length);
+                    
                             link = links[i].href;
-                            console.log(link);
+                 
                             if(gotImage === 0){
                                 if(getFileExtension(link) === "jpg" || getFileExtension(link) === "png"){
                                     processImage(link);
