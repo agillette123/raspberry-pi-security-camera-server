@@ -157,7 +157,7 @@
                             textElement = document.getElementById("latest-txt");
                             textElement.innerHTML = text; 
                             if (text !== previousUrl2) {
-                                downloadFile(url);
+                                //downloadFile(url);
                                 localStorage.setItem('previousUrl2', text);
                             }
                             if(alertsOn)
@@ -238,8 +238,9 @@
                 var isIce = false;
                 var isFail = false;
                 var lowAvgFreq = false;
-                if(!lowAvgFreq && !isFail && !isIce)
-                    setBackToOriginal();
+                var elements = Array.from(document.getElementsByClassName('warning-color'));
+                if(!lowAvgFreq && !isFail && !isIce && elements.length > 0)
+                  setBackToOriginal();
                 warningText = " ";
 
                 var lines = text.split(/<br>|[\r\n]+/);
