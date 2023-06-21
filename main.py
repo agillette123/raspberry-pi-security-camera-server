@@ -108,6 +108,10 @@ def keep_last_images():
 def download_file(name):
     return send_from_directory(app.config["UPLOAD_FOLDER"], name)
 
+@app.route('/audio/<name>')
+@auth.login_required
+def serve_audio(name):
+    return send_from_directory('templates', name)
 
 # List endpoint, get an HTML page listing all the uploaded files link
 @app.route('/')
