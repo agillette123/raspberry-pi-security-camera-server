@@ -111,7 +111,7 @@ def download_file(name):
 @app.route('/audio/<name>')
 @auth.login_required
 def serve_audio(name):
-    return send_from_directory('templates', name)
+    return send_from_directory('audio', name)
 
 # List endpoint, get an HTML page listing all the uploaded files link
 @app.route('/')
