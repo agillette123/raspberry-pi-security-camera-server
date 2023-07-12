@@ -30,7 +30,7 @@
         <p id = "latest-txt" class = "original-color"></p>
         <br>
         <audio id="audioPlayer" autoplay></audio>
-     
+
         <script>
             //all variables, defining most of them to be global to improve performance and reduce memory allocated
             var updateIntervalId = null; //updates aren't set to automatically run upon page loading
@@ -96,10 +96,8 @@
                         var htmlDoc = parser.parseFromString(responseText, 'text/html');
 
                         var links = htmlDoc.querySelectorAll('a');
-                        for(let i = 0; i < links.length; i++){
-                    
+                        for(let i = 0; i < links.length; i++){              
                             link = links[i].href;
-                 
                             if(gotImage === 0){
                                 if(getFileExtension(link) === "jpg" || getFileExtension(link) === "png"){
                                     processImage(link);
@@ -270,7 +268,6 @@
                     elements[i].classList.add('warning-color');
                 //play alert audio
                 audioPlayer.src = homeURL + '/audio/bloop.wav';
-                
             }
             
             //reset back to original display
